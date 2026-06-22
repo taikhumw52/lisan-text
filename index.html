@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A premium dictionary and rule-based transliteration engine for Lisan ud-Dawat (لسان الدعوة). Convert Romanized Lisan phrases into the correct Arabic-based Naskh script.">
+  <title>Lisan ud-Dawat Transliteration Console & Dictionary</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="logo-section">
+        <h1>لسان الدعوة</h1>
+        <p>Lisan ud-Dawat Transliteration & Dictionary Console</p>
+      </div>
+      
+      <!-- Tab Controls -->
+      <nav class="tabs-navigation" aria-label="Main Navigation">
+        <button class="tab-btn active" data-tab="translator" id="nav-btn-translator" aria-controls="translator-tab" aria-selected="true">
+          🌐 Translator
+        </button>
+        <button class="tab-btn" data-tab="dictionary" id="nav-btn-dictionary" aria-controls="dictionary-tab" aria-selected="false">
+          📖 Dictionary (<span id="dict-count-badge">0</span>)
+        </button>
+        <button class="tab-btn" data-tab="review" id="nav-btn-review" aria-controls="review-tab" aria-selected="false">
+          ✍️ Review Queue <span id="review-count-badge" class="badge" style="display: none; background: var(--accent-cyan); color: #000; margin-left: 5px;">0</span>
+        </button>
+      </nav>
+    </header>
+
+    <!-- TAB 1: TRANSLATOR PANEL -->
+    <main id="translator-tab" class="tab-content active" role="tabpanel" aria-labelledby="nav-btn-translator">
+      <div class="translator-grid">
+        <!-- Input Column -->
+        <section class="text-card" aria-label="Input Text Area">
+          <div class="card-header">
+            <span>Romanized Input</span>
+            <div class="card-actions">
+              <button class="card-btn" id="clear-input-btn" title="Clear all input text">Clear</button>
+            </div>
+          </div>
+          <div class="textarea-container">
+            <textarea id="input-textbox" class="textbox" placeholder="Type Romanized Lisan words here... (e.g. 'salaam bhai', 'mubarak', 'dua', 'khushi')"></textarea>
+          </div>
+          <div class="card-footer">
+            <div class="toggle-container">
+              <label class="switch" for="auto-translate-toggle">
+                <input type="checkbox" id="auto-translate-toggle" checked aria-label="Enable live instant translation">
+                <span class="slider"></span>
+              </label>
+              <span>Instant Translation</span>
+            </div>
+            <div>
+              <span id="word-count">0</span> words | <span id="char-count">0</span> chars
+            </div>
+          </div>
+        </section>
+
+        <!-- Convert Trigger Action (Center Column) -->
+        <div class="convert-action-area">
+          <button class="convert-btn" id="convert-btn" title="Convert Romanized text to Arabic Script Now" aria-label="Convert">
+            ➔
+          </button>
+          <span class="convert-label">Convert</span>
+        </div>
+
+        <!-- Output Column -->
+        <section class="text-card" aria-label="Arabic Script Output Area">
+          <div class="card-header">
+            <span>Lisan ud-Dawat Output (Naskh Script)</span>
+            <div class="card-actions">
+              <button class="card-btn" id="copy-output-btn" title="Copy output script to clipboard">Copy Output</button>
+            </div>
+          </div>
+          <div class="textarea-container">
+            <textarea id="output-textbox" class="textbox textbox-arabic" readonly placeholder="Output will appear here..." dir="rtl"></textarea>
+          </div>
+          <div class="card-footer">
+            <span style="color: var(--text-muted);">Font: Amiri Arabic (Naskh style)</span>
+            <span>RTL (Right-to-Left)</span>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- TAB 2: DICTIONARY MANAGEMENT PANEL -->
+    <section id="dictionary-tab" class="tab-content" role="tabpanel" aria-labelledby="nav-btn-dictionary">
+      <div class="dictionary-controls">
+        <input type="text" id="dict-search" class="search-input" placeholder="Search Romanized or Arabic words..." aria-label="Search Dictionary">
+        
+        <div class="action-buttons">
+          <button class="primary-btn" id="add-word-btn" title="Add a custom word translation">
+            ➕ Add Word Pair
+          </button>
+          <button class="secondary-btn" id="export-csv-btn" title="Export dictionary to a CSV file">
+            📤 Export CSV
+          </button>
+          <button class="secondary-btn" id="import-csv-btn" title="Import word pairs from a CSV file">
+            📥 Import CSV
+          </button>
+          <!-- Hidden Input for Importing CSV -->
+          <input type="file" id="import-file-input" accept=".csv" style="display: none;" aria-hidden="true">
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col" style="width: 35%;">Romanized Word</th>
+              <th scope="col" style="width: 35%;">Arabic Script Equivalent</th>
+              <th scope="col" style="width: 15%;">Origin</th>
+              <th scope="col" style="width: 15%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="dict-table-body">
+            <!-- Dynamic rows injected here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: REVIEW QUEUE PANEL (UNKNOWN WORDS) -->
+    <section id="review-tab" class="tab-content" role="tabpanel" aria-labelledby="nav-btn-review">
+      <div class="queue-info">
+        <div>
+          <h3>Review Queue</h3>
+          <p style="margin-top: 0.25rem;">Words listed here were transliterated because they are not present in your dictionary. Assign their correct Arabic spelling to improve translation accuracy.</p>
+        </div>
+        <button class="secondary-btn" id="clear-queue-btn" title="Clear all words currently in review queue">
+          🗑️ Clear Queue
+        </button>
+      </div>
+
+      <div id="review-queue-grid" class="queue-grid">
+        <!-- Dynamic review cards injected here -->
+      </div>
+    </section>
+  </div>
+
+  <!-- DICTIONARY ADD/EDIT MODAL OVERLAY -->
+  <div class="modal-overlay" id="add-word-modal" aria-hidden="true" role="dialog" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modal-title">Add New Word Pair</h3>
+        <button class="close-btn" id="close-modal" aria-label="Close dialog">&times;</button>
+      </div>
+      <form id="add-word-form">
+        <div class="form-group">
+          <label for="roman-input">Romanized Word</label>
+          <input type="text" id="roman-input" placeholder="e.g. khushi" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="arabic-input">Arabic Script Equivalent</label>
+          <input type="text" id="arabic-input" class="arabic-input" placeholder="e.g. خوشي" required autocomplete="off" dir="rtl">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="secondary-btn" id="cancel-modal">Cancel</button>
+          <button type="submit" class="primary-btn" id="save-word-btn">Save Word Pair</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>Lisan ud-Dawat Transliteration Console &copy; 2026. Made for Dawoodi Bohra community learning.</p>
+  </footer>
+
+  <!-- Javascript Modules (Loaded in dependency order) -->
+  <script src="dictionary.js"></script>
+  <script src="transliterate.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
